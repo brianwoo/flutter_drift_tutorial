@@ -263,9 +263,22 @@ class TasksCompanion extends UpdateCompanion<Task> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $TasksTable tasks = $TasksTable(this);
+  late final TaskDao taskDao = TaskDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [tasks];
+}
+
+mixin _$TaskDaoMixin on DatabaseAccessor<AppDatabase> {
+  $TasksTable get tasks => attachedDatabase.tasks;
+  Selectable<Task> completedTasksGenerated() {
+    return customSelect(
+        'SELECT * FROM tasks WHERE completed = 1 ORDER BY due_date DESC, name',
+        variables: [],
+        readsFrom: {
+          tasks,
+        }).asyncMap(tasks.mapFromRow);
+  }
 }

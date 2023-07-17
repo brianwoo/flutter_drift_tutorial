@@ -45,7 +45,7 @@ class _NewTaskInputState extends State<NewTaskInput> {
           name: Value(inputName),
           dueDate: Value(newTaskDate),
         );
-        database.insertTask(task);
+        database.taskDao.insertTask(task);
         _resetValuesAfterSubmit();
       },
     ));
