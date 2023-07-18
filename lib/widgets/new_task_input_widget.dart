@@ -12,6 +12,7 @@ class NewTaskInput extends StatefulWidget {
 
 class _NewTaskInputState extends State<NewTaskInput> {
   DateTime? newTaskDate;
+  Tag? selectedTag;
   late TextEditingController controller;
 
   @override
@@ -28,6 +29,7 @@ class _NewTaskInputState extends State<NewTaskInput> {
         mainAxisSize: MainAxisSize.max,
         children: [
           _buildTextField(context),
+          _buildTagSelector(context),
           _buildDateButton(context),
         ],
       ),
@@ -36,19 +38,78 @@ class _NewTaskInputState extends State<NewTaskInput> {
 
   Widget _buildTextField(BuildContext context) {
     return Expanded(
-        child: TextField(
-      controller: controller,
-      decoration: InputDecoration(hintText: 'Task Name'),
-      onSubmitted: (inputName) {
-        final database = Provider.of<AppDatabase>(context, listen: false);
-        final task = TasksCompanion(
-          name: Value(inputName),
-          dueDate: Value(newTaskDate),
+      flex: 1,
+      child: TextField(
+        controller: controller,
+        decoration: const InputDecoration(hintText: 'Task Name'),
+        onSubmitted: (inputName) {
+          final taskDao = Provider.of<TaskDao>(context, listen: false);
+          final task = TasksCompanion(
+            name: Value(inputName),
+            dueDate: Value(newTaskDate),
+            tagName: Value(selectedTag?.name),
+          );
+
+          print("insertTask: $task");
+
+          taskDao.insertTask(task);
+          _resetValuesAfterSubmit();
+        },
+      ),
+    );
+  }
+
+  StreamBuilder<List<Tag>> _buildTagSelector(BuildContext context) {
+    return StreamBuilder<List<Tag>>(
+      stream: Provider.of<TagDao>(context).watchTags(),
+      builder: (context, snapshot) {
+        final tags = snapshot.data ?? [];
+
+        DropdownMenuItem<Tag> dropdownFromTag(Tag tag) {
+          return DropdownMenuItem(
+            value: tag,
+            child: Row(
+              children: <Widget>[
+                Text(tag.name),
+                const SizedBox(width: 5),
+                Container(
+                  width: 15,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(tag.color),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final dropdownMenuItems =
+            tags.map((tag) => dropdownFromTag(tag)).toList()
+              // Add a "no tag" item as the first element of the list
+              ..insert(
+                0,
+                DropdownMenuItem(
+                  value: null,
+                  child: Text('No Tag'),
+                ),
+              );
+
+        return Expanded(
+          child: DropdownButton(
+            onChanged: (tag) {
+              setState(() {
+                selectedTag = tag;
+              });
+            },
+            isExpanded: true,
+            value: selectedTag,
+            items: dropdownMenuItems,
+          ),
         );
-        database.taskDao.insertTask(task);
-        _resetValuesAfterSubmit();
       },
-    ));
+    );
   }
 
   Widget _buildDateButton(BuildContext context) {
@@ -68,6 +129,7 @@ class _NewTaskInputState extends State<NewTaskInput> {
   void _resetValuesAfterSubmit() {
     setState(() {
       newTaskDate = null;
+      selectedTag = null;
       controller.clear();
     });
   }

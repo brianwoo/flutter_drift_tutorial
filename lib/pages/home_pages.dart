@@ -1,4 +1,5 @@
 import 'package:drift_tutorial/data/database.dart';
+import 'package:drift_tutorial/widgets/new_tag_input_widget.dart';
 import 'package:drift_tutorial/widgets/new_task_input_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -19,39 +20,41 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
-        actions: [_buildCompletedOnlySwitch()],
+        // actions: [_buildCompletedOnlySwitch()],
       ),
       body: Column(children: [
         Expanded(child: _buildTaskList(context)),
-        NewTaskInput(),
+        const NewTaskInput(),
+        const NewTagInput(),
       ]),
     );
   }
 
-  Widget _buildCompletedOnlySwitch() {
-    return Row(
-      children: [
-        const Text('Completed only'),
-        Switch(
-          value: showCompleted,
-          activeColor: Colors.white,
-          onChanged: (newValue) {
-            setState(() {
-              showCompleted = newValue;
-            });
-          },
-        )
-      ],
-    );
-  }
+  // Widget _buildCompletedOnlySwitch() {
+  //   return Row(
+  //     children: [
+  //       const Text('Completed only'),
+  //       Switch(
+  //         value: showCompleted,
+  //         activeColor: Colors.white,
+  //         onChanged: (newValue) {
+  //           setState(() {
+  //             showCompleted = newValue;
+  //           });
+  //         },
+  //       )
+  //     ],
+  //   );
+  // }
 
-  StreamBuilder<List<Task>> _buildTaskList(BuildContext context) {
-    final database = Provider.of<AppDatabase>(context);
+  StreamBuilder<List<TaskWithTag>> _buildTaskList(BuildContext context) {
+    final dao = Provider.of<TaskDao>(context);
+
     return StreamBuilder(
       //=== Test 1st version ===
-      stream: showCompleted
-          ? database.taskDao.watchCompletedTasks()
-          : database.taskDao.watchAllTasks(),
+      // stream: showCompleted
+      //     ? database.taskDao.watchCompletedTasks()
+      //     : database.taskDao.watchAllTasks(),
 
       //=== Test 2nd version ===
       // stream: showCompleted
@@ -63,28 +66,34 @@ class _HomePageState extends State<HomePage> {
       //     ? database.taskDao.watchCompletedTasksCustom()
       //     : database.taskDao.watchAllTasks(),
 
+      stream: dao.watchAllTasks(),
+
       builder: (context, snapshot) {
         final tasks = snapshot.data ?? [];
-
         return ListView.builder(
           itemCount: tasks.length,
           itemBuilder: (context, index) {
             final itemTask = tasks[index];
-            return _buildListItem(itemTask, database.taskDao);
+            return _buildListItem(itemTask, dao);
           },
         );
       },
     );
   }
 
-  Widget _buildListItem(Task itemTask, TaskDao dao) {
+  Widget _buildListItem(TaskWithTag itemTask, TaskDao dao) {
+    if (itemTask.task == null) {
+      return Container();
+    }
+
+    final task = itemTask.task!;
     return Slidable(
         key: const ValueKey(0),
         endActionPane: ActionPane(
           motion: const ScrollMotion(),
           children: [
             SlidableAction(
-              onPressed: (e) => dao.deleteTask(itemTask),
+              onPressed: (e) => dao.deleteTask(task),
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               icon: Icons.delete,
@@ -93,12 +102,38 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         child: CheckboxListTile(
-          title: Text(itemTask.name),
-          subtitle: Text(itemTask.dueDate?.toString() ?? 'No date'),
-          value: itemTask.completed,
+          title: Text(task.name),
+          subtitle: Text(task.dueDate?.toString() ?? 'No date'),
+          secondary: _buildTag(itemTask.tag),
+          value: task.completed,
           onChanged: (newValue) {
-            dao.updateTask(itemTask.copyWith(completed: newValue));
+            dao.updateTask(task.copyWith(completed: newValue));
           },
         ));
+  }
+
+  Column _buildTag(Tag? tag) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (tag != null) ...[
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(tag.color),
+            ),
+          ),
+          Text(
+            tag.name,
+            style: TextStyle(
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

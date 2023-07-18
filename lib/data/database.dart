@@ -4,23 +4,52 @@ part 'database.g.dart';
 
 class Tasks extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get tagName => text().nullable().references(Tags, #name)();
   TextColumn get name => text().withLength(min: 1, max: 50)();
   DateTimeColumn get dueDate => dateTime().nullable()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
 }
 
+class Tags extends Table {
+  TextColumn get name => text().withLength(min: 1, max: 10)();
+  IntColumn get color => integer()();
+
+  @override
+  Set<Column> get primaryKey => {name};
+}
+
+class TaskWithTag {
+  final Task? task;
+  final Tag? tag;
+
+  TaskWithTag({required this.task, required this.tag});
+}
+
 // To generate the database.g.dart:
 // RUN: flutter packages pub run build_runner watch
-@DriftDatabase(tables: [Tasks], daos: [TaskDao])
+@DriftDatabase(tables: [Tasks, Tags], daos: [TaskDao, TagDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from == 2) {
+            await migrator.createTable(tags);
+            await migrator.addColumn(tasks, tasks.tagName);
+          }
+        },
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
 }
 
 @DriftAccessor(
-  tables: [Tasks],
+  tables: [Tasks, Tags],
   // 2nd version - Using SQL directly and code generated
   // To call: completedTasksGenerated.get() or .watch()
   queries: {
@@ -37,13 +66,28 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
 
   // 1st version watchAllTasks, watchCompletedTasks
   // using the fluent API
-  Stream<List<Task>> watchAllTasks() {
+  Stream<List<TaskWithTag>> watchAllTasks() {
     return (select(tasks)
           ..orderBy([
             (t) => OrderingTerm(expression: t.dueDate, mode: OrderingMode.desc),
             (t) => OrderingTerm(expression: t.name),
           ]))
-        .watch();
+        .join(
+          [
+            leftOuterJoin(tags, tags.name.equalsExp(tasks.tagName)),
+          ],
+        )
+        .watch()
+        .map((rows) {
+          return rows.map(
+            (row) {
+              return TaskWithTag(
+                task: row.readTableOrNull(tasks),
+                tag: row.readTableOrNull(tags),
+              );
+            },
+          ).toList();
+        });
   }
 
   Stream<List<Task>> watchCompletedTasks() {
@@ -79,4 +123,14 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   Future<int> insertTask(Insertable<Task> task) => into(tasks).insert(task);
   Future updateTask(Insertable<Task> task) => update(tasks).replace(task);
   Future deleteTask(Insertable<Task> task) => delete(tasks).delete(task);
+}
+
+@DriftAccessor(tables: [Tags])
+class TagDao extends DatabaseAccessor<AppDatabase> with _$TagDaoMixin {
+  final AppDatabase db;
+
+  TagDao(this.db) : super(db);
+
+  Stream<List<Tag>> watchTags() => select(tags).watch();
+  Future<int> insertTag(Insertable<Tag> tag) => into(tags).insert(tag);
 }

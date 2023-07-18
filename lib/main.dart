@@ -16,8 +16,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (context) => AppDatabase(_openConnection()),
+    final db = AppDatabase(_openConnection());
+    return MultiProvider(
+      providers: [
+        Provider(create: (context) => db.taskDao),
+        Provider(create: (context) => db.tagDao),
+      ],
       child: MaterialApp(
         title: 'Material App',
         home: HomePage(),

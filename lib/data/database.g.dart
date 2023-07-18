@@ -3,6 +3,188 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
+class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 10),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+      'color', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [name, color];
+  @override
+  String get aliasedName => _alias ?? 'tags';
+  @override
+  String get actualTableName => 'tags';
+  @override
+  VerificationContext validateIntegrity(Insertable<Tag> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+          _colorMeta, color.isAcceptableOrUnknown(data['color']!, _colorMeta));
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {name};
+  @override
+  Tag map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Tag(
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      color: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}color'])!,
+    );
+  }
+
+  @override
+  $TagsTable createAlias(String alias) {
+    return $TagsTable(attachedDatabase, alias);
+  }
+}
+
+class Tag extends DataClass implements Insertable<Tag> {
+  final String name;
+  final int color;
+  const Tag({required this.name, required this.color});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<int>(color);
+    return map;
+  }
+
+  TagsCompanion toCompanion(bool nullToAbsent) {
+    return TagsCompanion(
+      name: Value(name),
+      color: Value(color),
+    );
+  }
+
+  factory Tag.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Tag(
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<int>(json['color']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<int>(color),
+    };
+  }
+
+  Tag copyWith({String? name, int? color}) => Tag(
+        name: name ?? this.name,
+        color: color ?? this.color,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('Tag(')
+          ..write('name: $name, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(name, color);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Tag && other.name == this.name && other.color == this.color);
+}
+
+class TagsCompanion extends UpdateCompanion<Tag> {
+  final Value<String> name;
+  final Value<int> color;
+  final Value<int> rowid;
+  const TagsCompanion({
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TagsCompanion.insert({
+    required String name,
+    required int color,
+    this.rowid = const Value.absent(),
+  })  : name = Value(name),
+        color = Value(color);
+  static Insertable<Tag> custom({
+    Expression<String>? name,
+    Expression<int>? color,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TagsCompanion copyWith(
+      {Value<String>? name, Value<int>? color, Value<int>? rowid}) {
+    return TagsCompanion(
+      name: name ?? this.name,
+      color: color ?? this.color,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TagsCompanion(')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -17,6 +199,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _tagNameMeta =
+      const VerificationMeta('tagName');
+  @override
+  late final GeneratedColumn<String> tagName = GeneratedColumn<String>(
+      'tag_name', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES tags (name)'));
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -45,7 +236,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           }),
           defaultValue: const Constant(false));
   @override
-  List<GeneratedColumn> get $columns => [id, name, dueDate, completed];
+  List<GeneratedColumn> get $columns => [id, tagName, name, dueDate, completed];
   @override
   String get aliasedName => _alias ?? 'tasks';
   @override
@@ -57,6 +248,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tag_name')) {
+      context.handle(_tagNameMeta,
+          tagName.isAcceptableOrUnknown(data['tag_name']!, _tagNameMeta));
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -83,6 +278,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     return Task(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      tagName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tag_name']),
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       dueDate: attachedDatabase.typeMapping
@@ -100,11 +297,13 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
 
 class Task extends DataClass implements Insertable<Task> {
   final int id;
+  final String? tagName;
   final String name;
   final DateTime? dueDate;
   final bool completed;
   const Task(
       {required this.id,
+      this.tagName,
       required this.name,
       this.dueDate,
       required this.completed});
@@ -112,6 +311,9 @@ class Task extends DataClass implements Insertable<Task> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || tagName != null) {
+      map['tag_name'] = Variable<String>(tagName);
+    }
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || dueDate != null) {
       map['due_date'] = Variable<DateTime>(dueDate);
@@ -123,6 +325,9 @@ class Task extends DataClass implements Insertable<Task> {
   TasksCompanion toCompanion(bool nullToAbsent) {
     return TasksCompanion(
       id: Value(id),
+      tagName: tagName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tagName),
       name: Value(name),
       dueDate: dueDate == null && nullToAbsent
           ? const Value.absent()
@@ -136,6 +341,7 @@ class Task extends DataClass implements Insertable<Task> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Task(
       id: serializer.fromJson<int>(json['id']),
+      tagName: serializer.fromJson<String?>(json['tagName']),
       name: serializer.fromJson<String>(json['name']),
       dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
       completed: serializer.fromJson<bool>(json['completed']),
@@ -146,6 +352,7 @@ class Task extends DataClass implements Insertable<Task> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'tagName': serializer.toJson<String?>(tagName),
       'name': serializer.toJson<String>(name),
       'dueDate': serializer.toJson<DateTime?>(dueDate),
       'completed': serializer.toJson<bool>(completed),
@@ -154,11 +361,13 @@ class Task extends DataClass implements Insertable<Task> {
 
   Task copyWith(
           {int? id,
+          Value<String?> tagName = const Value.absent(),
           String? name,
           Value<DateTime?> dueDate = const Value.absent(),
           bool? completed}) =>
       Task(
         id: id ?? this.id,
+        tagName: tagName.present ? tagName.value : this.tagName,
         name: name ?? this.name,
         dueDate: dueDate.present ? dueDate.value : this.dueDate,
         completed: completed ?? this.completed,
@@ -167,6 +376,7 @@ class Task extends DataClass implements Insertable<Task> {
   String toString() {
     return (StringBuffer('Task(')
           ..write('id: $id, ')
+          ..write('tagName: $tagName, ')
           ..write('name: $name, ')
           ..write('dueDate: $dueDate, ')
           ..write('completed: $completed')
@@ -175,12 +385,13 @@ class Task extends DataClass implements Insertable<Task> {
   }
 
   @override
-  int get hashCode => Object.hash(id, name, dueDate, completed);
+  int get hashCode => Object.hash(id, tagName, name, dueDate, completed);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Task &&
           other.id == this.id &&
+          other.tagName == this.tagName &&
           other.name == this.name &&
           other.dueDate == this.dueDate &&
           other.completed == this.completed);
@@ -188,29 +399,34 @@ class Task extends DataClass implements Insertable<Task> {
 
 class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> id;
+  final Value<String?> tagName;
   final Value<String> name;
   final Value<DateTime?> dueDate;
   final Value<bool> completed;
   const TasksCompanion({
     this.id = const Value.absent(),
+    this.tagName = const Value.absent(),
     this.name = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.completed = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
+    this.tagName = const Value.absent(),
     required String name,
     this.dueDate = const Value.absent(),
     this.completed = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Task> custom({
     Expression<int>? id,
+    Expression<String>? tagName,
     Expression<String>? name,
     Expression<DateTime>? dueDate,
     Expression<bool>? completed,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (tagName != null) 'tag_name': tagName,
       if (name != null) 'name': name,
       if (dueDate != null) 'due_date': dueDate,
       if (completed != null) 'completed': completed,
@@ -219,11 +435,13 @@ class TasksCompanion extends UpdateCompanion<Task> {
 
   TasksCompanion copyWith(
       {Value<int>? id,
+      Value<String?>? tagName,
       Value<String>? name,
       Value<DateTime?>? dueDate,
       Value<bool>? completed}) {
     return TasksCompanion(
       id: id ?? this.id,
+      tagName: tagName ?? this.tagName,
       name: name ?? this.name,
       dueDate: dueDate ?? this.dueDate,
       completed: completed ?? this.completed,
@@ -235,6 +453,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (tagName.present) {
+      map['tag_name'] = Variable<String>(tagName.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -252,6 +473,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   String toString() {
     return (StringBuffer('TasksCompanion(')
           ..write('id: $id, ')
+          ..write('tagName: $tagName, ')
           ..write('name: $name, ')
           ..write('dueDate: $dueDate, ')
           ..write('completed: $completed')
@@ -262,16 +484,19 @@ class TasksCompanion extends UpdateCompanion<Task> {
 
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
+  late final $TagsTable tags = $TagsTable(this);
   late final $TasksTable tasks = $TasksTable(this);
   late final TaskDao taskDao = TaskDao(this as AppDatabase);
+  late final TagDao tagDao = TagDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [tasks];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [tags, tasks];
 }
 
 mixin _$TaskDaoMixin on DatabaseAccessor<AppDatabase> {
+  $TagsTable get tags => attachedDatabase.tags;
   $TasksTable get tasks => attachedDatabase.tasks;
   Selectable<Task> completedTasksGenerated() {
     return customSelect(
@@ -281,4 +506,7 @@ mixin _$TaskDaoMixin on DatabaseAccessor<AppDatabase> {
           tasks,
         }).asyncMap(tasks.mapFromRow);
   }
+}
+mixin _$TagDaoMixin on DatabaseAccessor<AppDatabase> {
+  $TagsTable get tags => attachedDatabase.tags;
 }
