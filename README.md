@@ -1,16 +1,13 @@
 # drift_tutorial
 
-A new Flutter project.
+This tutorial is a 3 part series that went through the Moor DB framework for Flutter.
+The code has been modified to be used in Drift (successor of Moor)
 
-## Getting Started
+## Part 1:
+https://www.youtube.com/watch?v=zpWsedYMczM
 
-This project is a starting point for a Flutter application.
+## Part 2:
+https://www.youtube.com/watch?v=KczX8DISRgI
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Part 3:
+https://www.youtube.com/watch?v=RsXZOuWAAVM
